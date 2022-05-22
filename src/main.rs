@@ -1,14 +1,23 @@
 
 use mipmap::{image_info_new_2d_mipmap, fill_mipmaps};
 use screen_13::prelude_arc::*;
+use screen_13_imgui::*;
 
 mod presenter;
 mod mipmap;
 
 fn main() {
     //pretty_env_logger::init();
-    let screen_13 = EventLoop::new().debug(false).build().unwrap();
+    let screen_13 = EventLoop::new()
+        .window(|window_builder|{
+            window_builder.with_transparent(true)
+        })
+        .debug(false)
+        .build()
+        .unwrap();
     let mut cache = HashPool::new(&screen_13.device);
+
+    let mut imgui = ImGui::new(&screen_13.device);
 
     let presenter = presenter::Presenter::new(&screen_13.device);
 
@@ -42,25 +51,17 @@ fn main() {
     graph.resolve().submit(&mut cache).unwrap();
 
     screen_13.run(|mut frame|{
-        /*
-        let image = frame.render_graph.bind_node(cache.lease(
-                image_info_new_2d_mipmap(vk::Format::R8G8B8A8_UNORM, 800, 600, vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::COLOR_ATTACHMENT)
-        ).unwrap());
-
-        frame.render_graph.begin_pass("Red render pass")
-            .bind_pipeline(&rppl)
-            .clear_color(0)
-            .store_color(0, image)
-            .record_subpass(move |subpass|{
-                subpass.draw(6, 1, 0, 0);
-            });
-
-        fill_mipmaps(&mut frame.render_graph, image);
-        */
 
         let image = frame.render_graph.bind_node(img.take().unwrap());
 
-        presenter.present(image, &mut frame);
+        frame.render_graph.clear_color_image_value(frame.swapchain_image, [0., 0., 0., 0.]);
+
+        //presenter.present(image, &mut frame);
+
+        let gui_image = imgui.draw_frame(&mut frame, |ui|{
+            ui.button("Test");
+        });
+        presenter.present(gui_image, &mut frame);
 
         img = Some(frame.render_graph.unbind_node(image));
     }).unwrap();

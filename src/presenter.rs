@@ -97,6 +97,7 @@ impl Presenter {
             })
             */
             //.clear_color(0)
+            .load_color(0, frame.swapchain_image)
             .store_color(0, frame.swapchain_image);
         render_graph.set_render_area(0, 0, width, height);
         render_graph.record_subpass(move |subpass| {
