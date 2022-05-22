@@ -20,7 +20,29 @@ fn main() {
         ]
     );
 
+    let mut graph = RenderGraph::new();
+
+    let tmp_img = graph.bind_node(Image::create(&screen_13.device,
+                image_info_new_2d_mipmap(vk::Format::R8G8B8A8_UNORM, 800, 600, vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::COLOR_ATTACHMENT)
+    ).unwrap());
+
+
+    graph.begin_pass("Red render pass")
+        .bind_pipeline(&rppl)
+        .clear_color(0)
+        .store_color(0, tmp_img)
+        .record_subpass(move |subpass|{
+            subpass.draw(6, 1, 0, 0);
+        });
+
+    fill_mipmaps(&mut graph, tmp_img);
+
+    let mut img = Some(graph.unbind_node(tmp_img));
+
+    graph.resolve().submit(&mut cache).unwrap();
+
     screen_13.run(|mut frame|{
+        /*
         let image = frame.render_graph.bind_node(cache.lease(
                 image_info_new_2d_mipmap(vk::Format::R8G8B8A8_UNORM, 800, 600, vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::COLOR_ATTACHMENT)
         ).unwrap());
@@ -34,9 +56,12 @@ fn main() {
             });
 
         fill_mipmaps(&mut frame.render_graph, image);
+        */
+
+        let image = frame.render_graph.bind_node(img.take().unwrap());
 
         presenter.present(image, &mut frame);
 
-        frame.render_graph.unbind_node(image);
+        img = Some(frame.render_graph.unbind_node(image));
     }).unwrap();
 }

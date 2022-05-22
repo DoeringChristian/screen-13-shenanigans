@@ -17,6 +17,7 @@ pub fn fill_mipmaps(graph: &mut RenderGraph, image: impl Into<AnyImageNode>){
     let mut i = 0;
 
     while width > 1 && height > 1{
+        println!("MipMap: {}, {}", width, height);
         graph.blit_image_region(image, image, 
             &vk::ImageBlit{
                 src_subresource: vk::ImageSubresourceLayers{
